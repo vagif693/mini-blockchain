@@ -1,14 +1,24 @@
+use std::fmt;
+
 #[derive(Debug)]
 pub enum BlockchainError {
     EmptyChain,
-    InvalidBlock(u64),
+    InvalidHash(u64),
+    BrokenLink(u64),
 }
 
-impl std::fmt::Display for BlockchainError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for BlockchainError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            BlockchainError::EmptyChain => write!(f, "Blockchain has no blocks"),
-            BlockchainError::InvalidBlock(i) => write!(f, "Block {} failed integrity check", i),
+            BlockchainError::EmptyChain => {
+                write!(f, "Blockchain has no blocks")
+            }
+            BlockchainError::InvalidHash(index) => {
+                write!(f, "Block {} has an invalid hash — data may have been tampered with", index)
+            }
+            BlockchainError::BrokenLink(index) => {
+                write!(f, "Block {} is not linked correctly to the previous block", index)
+            }
         }
     }
 }

@@ -11,6 +11,9 @@ fn main() {
 
     bc.add_block(String::from("Alice sends 10 BTC to Bob")).unwrap();
     bc.add_block(String::from("Bob sends 3 BTC to Charlie")).unwrap();
+    bc.add_block(String::from("Charlie sends 1 BTC to Alice")).unwrap();
+
+    bc.print_chain();
 
     match bc.is_valid() {
         Ok(()) => println!("✅ Blockchain is valid!"),
