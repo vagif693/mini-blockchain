@@ -2,6 +2,7 @@
 
 > A proof-of-concept blockchain engine built from scratch in Rust — featuring SHA-256 hashing, Proof of Work mining, and cryptographic tamper detection.
 
+[![CI](https://github.com/vagif693/mini-blockchain/actions/workflows/ci.yml/badge.svg)](https://github.com/vagif693/mini-blockchain/actions/workflows/ci.yml)
 ![Rust](https://img.shields.io/badge/Rust-1.75+-orange?style=flat-square&logo=rust)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square)
@@ -14,14 +15,32 @@
 🚀 Starting Mini Blockchain
 
 ⛏️  Mining block 0...
-✅ Block mined! Nonce: 125  | Hash: 00c700c4d1f5...
+✅ Block mined! Nonce: 203 | Hash: 0066ab8fabd9
 ⛏️  Mining block 1...
-✅ Block mined! Nonce: 174  | Hash: 00dc2c7b60d7...
+✅ Block mined! Nonce: 107 | Hash: 00d52fb99b10
+⛏️  Mining block 2...
+✅ Block mined! Nonce: 420 | Hash: 002c8391b69c
+⛏️  Mining block 3...
+✅ Block mined! Nonce: 89 | Hash: 00444e377e11
+
+========== 🔗 BLOCKCHAIN ==========
+
+📦 Block #1
+   Data     : Alice sends 10 BTC to Bob
+   Nonce    : 107
+   Prev Hash: 0066ab8fabd9...
+   Hash     : 00d52fb99b10...
+   Time     : 2026-08-10T03:11:19.456504700+00:00
+
+   ... blocks #0, #2 and #3 omitted here for brevity ...
+
+====================================
 
 ✅ Blockchain is valid!
 
 🔧 Tampering with Block 1...
-❌ Blockchain is INVALID! Tampering detected.
+
+❌ Tampering detected: Block 1 has an invalid hash — data may have been tampered with
 ```
 
 ---
@@ -54,9 +73,11 @@ SHA256(index + timestamp + data + previous_hash + nonce)
 
 ### Tamper Detection
 
-is_valid() checks two things for every block:
+is_valid() checks three things for every block, the genesis block included:
 1. Hash integrity — recalculates and compares the stored hash
-2. Chain linkage — verifies previous_hash matches the actual previous block
+2. Proof of work — confirms the hash really meets the difficulty target, so a
+   hand-crafted block that was never mined cannot pass as genuine
+3. Chain linkage — verifies previous_hash matches the actual previous block
 
 ---
 
@@ -81,6 +102,12 @@ cd mini-blockchain/mini-blockchain
 cargo run
 ```
 
+Run the test suite:
+
+```bash
+cargo test
+```
+
 ---
 
 ## 🗺️ Roadmap
@@ -89,6 +116,7 @@ cargo run
 - [x] Proof of Work mining with configurable difficulty
 - [x] Cryptographic chain validation
 - [x] Tamper detection demo
+- [x] Unit test suite and CI
 - [ ] CLI interface with clap
 - [ ] Persist chain to JSON file
 - [ ] Wallet addresses and digital signatures
