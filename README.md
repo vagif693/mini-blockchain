@@ -10,7 +10,7 @@
 
 ## 📸 Demo
 
-\`\`\`
+```
 🚀 Starting Mini Blockchain
 
 ⛏️  Mining block 0...
@@ -22,7 +22,7 @@
 
 🔧 Tampering with Block 1...
 ❌ Blockchain is INVALID! Tampering detected.
-\`\`\`
+```
 
 ---
 
@@ -32,7 +32,7 @@ A blockchain is a linked list of blocks where each block contains a cryptographi
 
 ### Block Structure
 
-\`\`\`rust
+```rust
 struct Block {
     index:         u64,     // Position in the chain
     timestamp:     String,  // RFC3339 creation time
@@ -41,16 +41,16 @@ struct Block {
     hash:          String,  // SHA-256 fingerprint of this block
     nonce:         u64,     // Value found during mining
 }
-\`\`\`
+```
 
 ### Proof of Work
 
 To add a block, the miner must find a nonce such that:
 
-\`\`\`
+```
 SHA256(index + timestamp + data + previous_hash + nonce)
     must start with "00..."  (configurable difficulty)
-\`\`\`
+```
 
 ### Tamper Detection
 
@@ -75,11 +75,11 @@ is_valid() checks two things for every block:
 
 **Prerequisites:** Rust 1.75+ (https://rustup.rs)
 
-\`\`\`bash
+```bash
 git clone https://github.com/vagif693/mini-blockchain.git
 cd mini-blockchain/mini-blockchain
 cargo run
-\`\`\`
+```
 
 ---
 
