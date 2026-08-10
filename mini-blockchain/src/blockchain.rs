@@ -40,16 +40,23 @@ impl Blockchain {
         Ok(())
     }
 
-    /// Walk every block and verify two things:
+    /// Walk every block and verify three things:
     ///   1. The stored hash still matches a fresh recalculation (detects data edits)
-    ///   2. The previous_hash field matches the actual previous block's hash (detects reordering)
+    ///   2. The hash actually meets the difficulty target (detects unmined blocks)
+    ///   3. The previous_hash field matches the actual previous block's hash (detects reordering)
+    ///
+    /// The genesis block is checked too — it is mined like any other block, so a
+    /// tampered block 0 must not slip through just because nothing precedes it.
     ///
     /// Returns Ok(()) if the chain is intact, or the first error encountered.
     pub fn is_valid(&self) -> Result<(), BlockchainError> {
-        for i in 1..self.chain.len() {
-            let current = &self.chain[i];
-            let previous = &self.chain[i - 1];
+        if self.chain.is_empty() {
+            return Err(BlockchainError::EmptyChain);
+        }
 
+        let target = "0".repeat(self.difficulty);
+
+        for (i, current) in self.chain.iter().enumerate() {
             let recalculated = Block::calculate_hash(
                 current.index,
                 &current.timestamp,
@@ -62,7 +69,13 @@ impl Blockchain {
                 return Err(BlockchainError::InvalidHash(current.index));
             }
 
-            if current.previous_hash != previous.hash {
+            // Without this, a block carrying a perfectly consistent but never-mined
+            // hash would validate, and the proof of work would be decorative.
+            if !current.hash.starts_with(&target) {
+                return Err(BlockchainError::InsufficientWork(current.index));
+            }
+
+            if i > 0 && current.previous_hash != self.chain[i - 1].hash {
                 return Err(BlockchainError::BrokenLink(current.index));
             }
         }
