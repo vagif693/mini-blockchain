@@ -52,3 +52,63 @@ impl Block {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn calculate_hash_is_deterministic() {
+        let first = Block::calculate_hash(1, "2026-01-01T00:00:00Z", "data", "prev", 42);
+        let second = Block::calculate_hash(1, "2026-01-01T00:00:00Z", "data", "prev", 42);
+
+        assert_eq!(first, second);
+    }
+
+    #[test]
+    fn hash_is_64_hex_characters() {
+        let hash = Block::calculate_hash(0, "t", "d", "p", 0);
+
+        assert_eq!(hash.len(), 64);
+        assert!(hash.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn changing_any_field_changes_the_hash() {
+        let base = Block::calculate_hash(1, "t", "d", "p", 0);
+
+        assert_ne!(base, Block::calculate_hash(2, "t", "d", "p", 0));
+        assert_ne!(base, Block::calculate_hash(1, "u", "d", "p", 0));
+        assert_ne!(base, Block::calculate_hash(1, "t", "e", "p", 0));
+        assert_ne!(base, Block::calculate_hash(1, "t", "d", "q", 0));
+        assert_ne!(base, Block::calculate_hash(1, "t", "d", "p", 1));
+    }
+
+    #[test]
+    fn new_block_records_its_inputs() {
+        let block = Block::new(7, String::from("payload"), String::from("abc"));
+
+        assert_eq!(block.index, 7);
+        assert_eq!(block.data, "payload");
+        assert_eq!(block.previous_hash, "abc");
+        assert_eq!(block.nonce, 0);
+    }
+
+    #[test]
+    fn mining_hits_the_target_and_leaves_the_hash_consistent() {
+        let mut block = Block::new(1, String::from("payload"), String::from("abc"));
+        block.mine(3);
+
+        assert!(block.hash.starts_with("000"));
+        assert_eq!(
+            block.hash,
+            Block::calculate_hash(
+                block.index,
+                &block.timestamp,
+                &block.data,
+                &block.previous_hash,
+                block.nonce,
+            )
+        );
+    }
+}

@@ -103,3 +103,116 @@ impl Blockchain {
         println!("\n====================================\n");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DIFFICULTY: usize = 2;
+
+    fn target() -> String {
+        "0".repeat(DIFFICULTY)
+    }
+
+    #[test]
+    fn genesis_is_created_and_mined() {
+        let chain = Blockchain::new(DIFFICULTY);
+        let genesis = &chain.chain[0];
+
+        assert_eq!(chain.chain.len(), 1);
+        assert_eq!(genesis.index, 0);
+        assert_eq!(genesis.previous_hash, "0");
+        assert!(genesis.hash.starts_with(&target()));
+    }
+
+    #[test]
+    fn added_blocks_link_to_their_predecessor() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        chain.add_block(String::from("first")).unwrap();
+        chain.add_block(String::from("second")).unwrap();
+
+        assert_eq!(chain.chain.len(), 3);
+        for i in 1..chain.chain.len() {
+            assert_eq!(chain.chain[i].index, i as u64);
+            assert_eq!(chain.chain[i].previous_hash, chain.chain[i - 1].hash);
+        }
+        assert!(chain.is_valid().is_ok());
+    }
+
+    #[test]
+    fn tampering_with_data_is_detected() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        chain.add_block(String::from("Alice pays Bob")).unwrap();
+        chain.chain[1].data = String::from("Alice pays the attacker");
+
+        assert!(matches!(
+            chain.is_valid(),
+            Err(BlockchainError::InvalidHash(1))
+        ));
+    }
+
+    #[test]
+    fn tampering_with_the_genesis_block_is_detected() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        chain.add_block(String::from("first")).unwrap();
+        chain.chain[0].data = String::from("rewritten history");
+
+        assert!(matches!(
+            chain.is_valid(),
+            Err(BlockchainError::InvalidHash(0))
+        ));
+    }
+
+    #[test]
+    fn a_consistent_but_unmined_block_is_rejected() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        let previous_hash = chain.last_block().unwrap().hash.clone();
+
+        // Internally honest — the stored hash really is the hash of these fields —
+        // but nobody ever did the work. Nudge the nonce until the hash clearly
+        // misses the target, so the test never rides on a lucky leading zero.
+        let mut forged = Block::new(1, String::from("free money"), previous_hash);
+        while forged.hash.starts_with(&target()) {
+            forged.nonce += 1;
+            forged.hash = Block::calculate_hash(
+                forged.index,
+                &forged.timestamp,
+                &forged.data,
+                &forged.previous_hash,
+                forged.nonce,
+            );
+        }
+        chain.chain.push(forged);
+
+        assert!(matches!(
+            chain.is_valid(),
+            Err(BlockchainError::InsufficientWork(1))
+        ));
+    }
+
+    #[test]
+    fn a_rewritten_link_is_detected() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        chain.add_block(String::from("first")).unwrap();
+        chain.add_block(String::from("second")).unwrap();
+
+        // Re-point block 2 at the genesis block and re-mine it, so the hash is
+        // valid and meets the target and the only remaining fault is the linkage.
+        chain.chain[2].previous_hash = chain.chain[0].hash.clone();
+        chain.chain[2].mine(DIFFICULTY);
+
+        assert!(matches!(
+            chain.is_valid(),
+            Err(BlockchainError::BrokenLink(2))
+        ));
+    }
+
+    #[test]
+    fn an_empty_chain_reports_empty() {
+        let mut chain = Blockchain::new(DIFFICULTY);
+        chain.chain.clear();
+
+        assert!(matches!(chain.last_block(), Err(BlockchainError::EmptyChain)));
+        assert!(matches!(chain.is_valid(), Err(BlockchainError::EmptyChain)));
+    }
+}
