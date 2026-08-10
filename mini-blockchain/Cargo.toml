@@ -2,6 +2,11 @@
 name = "mini-blockchain"
 version = "0.1.0"
 edition = "2021"
+description = "A mini blockchain built from scratch in Rust with SHA-256 hashing and proof of work"
+repository = "https://github.com/vagif693/mini-blockchain"
+license = "MIT"
+keywords = ["blockchain", "sha256", "proof-of-work", "cryptography"]
+categories = ["cryptography", "algorithms"]
 
 [dependencies]
 sha2 = "0.10"
